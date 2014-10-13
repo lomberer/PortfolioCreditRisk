@@ -1,0 +1,16 @@
+{
+    "contents" : "\nN <- 100 #number of Loans\nM <- 1000 #number of scenario\n#Z <- -1.5 #Credit Factor\n\nPosNames <- paste(\"Loan\",1:N,sep=\"\")\nrho <- rep(0.3,nrow=N) #correlation with Z\nLGD <- rep(0.5,nrow=N) #% of Loss\nPD <- rep(0.01,nrow=N) #Probability of Default\nEAD <- rep(100,nrow=N)  #Exposure at Default\n\nport <- data.frame(PosNames,PD,LGD,EAD,rho,stringsAsFactors = F)\nhead(port)\n\nsimMC <- function(port,M){\n  N <- nrow(port)\n  Z <- (rnorm(M,mean=0))\n  LossMC <- matrix(,M,1)\n  for (m in 1:M){\n    e <- rnorm(N,mean=0,sd=1)\n    V <- rho*Z[m] + sqrt(1-rho^2)*e\n    #default_treshold <- (qnorm(PD)-Z*t(rho))/sqrt(1-rho^2)\n    \n    default_flag <- V < qnorm(PD)\n    LossMC[m] <- sum(default_flag * port$EAD * port$LGD)\n  }\n  return (cbind(LossMC,1/M))\n}\n\nsimIS <- function(port,M,mu){\n  N <- nrow(port)\n  if (exists(\"SEED\")) {set.seed(SEED)\n  } else set.seed(12345)\n\n  Z <- (rnorm(M,mean=mu))\n  LossMC <- matrix(,M,1)\n  for (m in 1:M){\n    default_treshold <- (qnorm(PD)-Z[m]*rho)/sqrt(1-rho^2)\n    e_matrix <- matrix(rnorm(N,mean=0,sd=1),1,N)\n    default_flag <- e_matrix <default_treshold\n    LossMC[m] <- sum(default_flag * port$EAD * port$LGD)\n  }\n  ISweight <- exp(-mu*Z+mu^2/2)/M\n  return (cbind(LossMC,ISweight))\n}\n\nsimRes <- function(simLoss,qt=c(0.8,0.9,0.95,0.99,0.999,0.9999)){\n  return(wtd.quantile(simLoss[,1],weights=simLoss[,2],probs=qt))\n}\n\nwtable <- function(simLoss){\n  return(wtd.table(simLoss[,1],weights=simLoss[,2]))\n}\n\nnaiveMC <- function(port,M) {\n  lossMC <- matrix(,M)\n  N <- nrow(port)\n  for (m in 1:M){\n    loss_m=0\n    for (n in 1:N){\n      Z <- rnorm(1)\n      e <- rnorm(1)\n      w <- port$rho[n]\n      if (w*Z+sqrt(1-w^2)*e < qnorm(port$PD[n])){\n        loss_m = loss_m + port$LGD[n] *port$EAD[n]\n      }\n    }\n    lossMC[m]=loss_m\n    }\n    return (cbind(lossMC,1/M))\n  }\n\nsimMC <- function(port,M,mu){\n  N <- nrow(port)\n  Z <- (rnorm(M,mean=mu))\n  LossMC <- matrix(,M,1)\n  for (m in 1:M){\n    e <- rnorm(N,mean=0,sd=1)\n    V <- rho*Z[m] + sqrt(1-rho^2)*e\n    #default_treshold <- (qnorm(PD)-Z*t(rho))/sqrt(1-rho^2)\n    default_flag <- V < qnorm(PD)\n    LossMC[m] <- sum(default_flag * port$EAD * port$LGD)\n  }\n  weights <- exp(-mu*Z+mu^2/2)/M\n  return (cbind(LossMC,weights))\n}\n\n\n\n\n\n\"\nM = 9999\nLossMC <- simMC(port,M)\nLossIS <- simIS(port,M,-1.5)\nsimRes(LossMC)\nsimRes(LossIS)\n\"",
+    "created" : 1412779873568.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3809632676",
+    "id" : "EFC577CE",
+    "lastKnownWriteTime" : 1412693563,
+    "path" : "~/GitHub/PortfolioCreditRisk/Rproject/MCScript.R",
+    "project_path" : "MCScript.R",
+    "properties" : {
+    },
+    "source_on_save" : false,
+    "type" : "r_source"
+}

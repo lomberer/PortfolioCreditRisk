@@ -1,0 +1,16 @@
+{
+    "contents" : "d = 10 # 1...j...d\nm = 1000 # 1...k...m\np = rep(0.01,m)\nc = rep(10,m)\nx = 1000\nfor (k in 1:m){\n  p[k] = 0.01*(1+sin(16*pi*k/m)) #PD\n  c[k] = ceiling(5*k/m)^2\n}\na = matrix(runif(d*m,min=0,max=1/sqrt(d)),nrow=m) #1000 × 10\nb = sqrt(1-rowSums(a^2)) #1000\nZ <- rnorm(d) # 10\np_Z <- pnorm((a%*%Z+qnorm(p))/b)\n\ngetp_theta <- function(theta,p,c){\n  return(p*exp(theta*c)/(1+p*(exp(theta*c)-1)))\n}\n\ngetpsi <- function(theta,p,c){\n  psi=0\n  for (k in 1:m){\n    psi = psi + log(1+p[k]*(exp(theta*c[k])-1))\n  }\n  return(psi)\n}\n\n\ngetlr <- function(theta,L,p,c){\n  return(exp(-theta*L+getpsi(theta,p,c)))\n}\n\n#\\psi.prime\ngetdpsi <- function(theta,p,c){\n  dpsi = 0\n  for (k in 1:length(p)){\n    dpsi = dpsi+ p[k]*c[k]*exp(theta*c[k])/(1+p[k]*(exp(theta*c[k])-1))\n  }\n  return(dpsi)\n}\n\ngettheta_x <- function(theta,x,p,c){\n  oz <- function(theta){\n    return(getdpsi(theta,p,c)-x)\n  }\n  return(uniroot(oz,c(0,2)$root))\n}\n\ngetJ_x <- function(theta){\n  return(-theta*x+getpsi(theta,p_Z,c)-t(Z)%*%Z)\n}\n\ntheta_x <- optimize(getJ_x,c(0,2))$minimum\n\n",
+    "created" : 1412779956310.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "4291962458",
+    "id" : "CAF7D308",
+    "lastKnownWriteTime" : 1412897553,
+    "path" : "~/GitHub/PortfolioCreditRisk/Rproject/Glassman_MC.R",
+    "project_path" : "Glassman_MC.R",
+    "properties" : {
+    },
+    "source_on_save" : false,
+    "type" : "r_source"
+}

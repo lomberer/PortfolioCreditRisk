@@ -1,0 +1,17 @@
+{
+    "contents" : "d = 10 # 1...j...d\nm = 1000 # 1...k...m\nx = 1000 #loss treshold\np = rep(NA,m)\nc = rep(NA,m)\nfor (k in 1:m){\n  p[k] = 0.01*(1+sin(16*pi*k/m)) #PD\n  c[k] = ceiling(5*k/m)^2\n}\na = matrix(runif(d*m,min=0,max=1/sqrt(d)),nrow=m) #1000 × 10\nb = sqrt(1-rowSums(a^2)) #1000\n\n\n\ngetp_theta <- function(theta,p,c){\n  return(p*exp(theta*c)/(1+p*(exp(theta*c)-1)))\n}\n\ngetpsi <- function(theta,p,c){\n  psi=0\n  for (k in 1:m){\n    psi = psi + log(1+p[k]*(exp(theta*c[k])-1))\n  }\n  return(psi)\n}\n\n\ngetlr <- function(theta,L,p,c){\n  return(exp(-theta*L+getpsi(theta,p,c)))\n}\n\n#\\psi.prime\ngetdpsi <- function(theta,p,c){\n  dpsi = 0\n  for (k in 1:length(p)){\n    dpsi = dpsi+ p[k]*c[k]*exp(theta*c[k])/(1+p[k]*(exp(theta*c[k])-1))\n  }\n  return(dpsi)\n}\n\ngettheta_x <- function(x,p_Z,c){\n  oz <- function(theta){\n    dpsi = 0 \n    for (k in 1:length(p_Z)){\n      dpsi = dpsi+ p_Z[k]*c[k]*exp(theta*c[k])/(1+p_Z[k]*(exp(theta*c[k])-1))\n    }\n    return(dpsi-x)\n  }\n  if (sum(p_Z*c)>x){theta_x = 0}\n  else {\n    theta_x <- uniroot(oz,c(0,5))$root\n  }\n  return(theta_x)\n}\n\ngetJ_x <- function(z){\n  #Z is vector of d\n  p_Z <- pnorm((a%*%Z+qnorm(p))/b)\n  oz <- function(theta){\n    dpsi = 0 \n    for (k in 1:length(p_Z)){\n      dpsi = dpsi+ p_Z[k]*c[k]*exp(theta*c[k])/(1+p_Z[k]*(exp(theta*c[k])-1))\n    }\n    return(dpsi-x)\n  }\n  if (sum(p_Z*c)>x){theta_x = 0}\n  else {\n    theta_x <- uniroot(oz,c(0,2))$root\n  }\n  psi <- getpsi(theta_x,p_Z,c)\n  return(-1*(-theta_x*x+getpsi(theta_x,p_Z,c)-t(Z)%*%Z))\n}\n#Calibrate \\mu by maximizing J(x)\nmu <- optim(runif(d, 0, 1),getJ_x,method = \"L-BFGS-B\",lower=rep(0,d),upper=rep(2,d))$par\n\nmu=rep(0,d)\n#try to reduct variance only by the first part.\nGlassman_MC <- function(){\n  #Step 1\n  Z = rnorm(d,mean=mu,sd=1)\n  #Step 2\n  p_Z <- pnorm((a%*%Z+qnorm(p))/b)\n  theta_x <- gettheta_x(x,p_Z,c)\n  #print(theta_x)\n  p_theta <- getp_theta(theta_x,p_Z,c)\n  #Step 3\n  X <- a%*%Z+b*rnorm(m)\n  Y <- rnorm(m)>qnorm(1-p_theta)\n  L <- sum(Y*c)\n  #print(L)\n  weight=exp(-theta_x*L+getpsi(theta_x,p_Z,c))#weight is too low. \n  res <- c(L,weight)\n  names(res) <- c(\"LossAmount\",\"LossProb\")\n  return(res)\n}\n\nN = 100\nresv=data.frame(Loss=rep(NA,N),Weights=rep(NA,N))\nfor (i in 1:N){\n  resv[i,1] = Glassman_MC()[1]\n  resv[i,2] = Glassman_MC()[2]\n}\nlossquantile(resv)\n",
+    "created" : 1413146680358.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3061658033",
+    "id" : "8F4E87FD",
+    "lastKnownWriteTime" : 1413243173,
+    "path" : "~/GitHub/PortfolioCreditRisk/ImportanceSampling/Glassman_MC.R",
+    "project_path" : null,
+    "properties" : {
+        "tempName" : "Untitled2"
+    },
+    "source_on_save" : false,
+    "type" : "r_source"
+}

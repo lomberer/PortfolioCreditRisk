@@ -1,0 +1,16 @@
+{
+    "contents" : "PortLossMC <- function(port,N,M,seed=12345){\n  set.seed(12345)\n  e_matrix <- matrix(rnorm(N*M,mean=0,sd=1),M,N)\n  default_treshold <- (qnorm(PD)-rho*Z)/sqrt(1-rho^2)\n  default_flag <- e_matrix <default_treshold\n  \n  LossMC <- default_flag * port$EAD * port$LGD\n  PortLoss <- rowSums(LossMC)\n  return (PortLoss)\n}\n",
+    "created" : 1412779875592.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "970685443",
+    "id" : "3A8C1935",
+    "lastKnownWriteTime" : 1412693563,
+    "path" : "~/GitHub/PortfolioCreditRisk/Rproject/MCfuns.r",
+    "project_path" : "MCfuns.r",
+    "properties" : {
+    },
+    "source_on_save" : false,
+    "type" : "r_source"
+}

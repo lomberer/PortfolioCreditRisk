@@ -1,0 +1,73 @@
+Moment Generating Function
+------------
+$$
+M_x(z) 
+= G_x(e^z)
+=\mathbb{E}(e^{zX})
+=\displaystyle\sum_{n=0}^{\infty}\mathbb{P}[X=n]e^{nz}
+$$
+MGF can generate all the function moments that $\mathbb{E}[X^q]=M_X^{(q)}(0)$ where $f^{(q)}$ denotes the q-th derivative of function $f$
+
+Proof:
+
+$M_X^{(1)}(z)=\frac{d}{dz}\mathbb{E}[e^{zX}]=\mathbb{E}[Xe^{zX}]$
+so
+$M_X^{(1)}(0)=\mathbb{E}[X]$
+
+Characteristic Function (Fourier Transform)
+----------------------------------
+Characteristic function is the Fourier Transform of Density Function
+$$
+\varphi_X(z)=\mathbb{E}[e^{izX}]=M_X(iz)=\int_{-\infty}^{\infty}e^{izx}f_X(x)dx=\int_{-\infty}^{\infty}e^{izx}dF_X(x)
+$$
+Chracteristic function always exists because $e^{izx}=cos(zx)+i sin(zx)$ are bounded.
+
+Conditional Independence
+-----------------
+Mixture models depends on conditional independence framwork. 
+* Step 1: Draw realization of $y$ of $Y ~ F$
+* Step 2: Generate portfolio loss distirbution:
+$ L|_{Y=y}=\sum_{i=1}^m E_i(L_i|_{Y=y})$
+* Step 3: Integrate the conditional portfolio loss distribution over the space w.r.t. $F$ of all relization of $y$ of $Y$
+
+For Step 2, there are 4 alternatives:
+
+* Recurvesive Generation $(CreditRisk^+)$
+
+Construct the portfolio loss from 1 asset, and recursively add others till $m$ assets
+$$\mathbb{P}^{(m)}[L=k]=\mathbb{P}^{(m-1)}[L=k](1-p_m) + \mathbb{P}^{(m-1)}[L=k-1]p_m$$
+
+* Fourier Tranformation
+
+Use the convolution theorem of Fourier Tranform, convolution is done at characteristic funciton level and use $F^{-1}$ to tranform back.  Fast Fourier Tranformation algorithm is usually used for numerical computation.  As the FFT algorithm works on a lattic, the only problem is to choo se the dsicretization to balance accuracy and performance.
+
+* Saddle-Point Approximation
+
+Saddle-point appriximation is to expande the cumulant generating function.  CGF is defined as $K_L(z)=lnM_L(z)=ln\mathbb{E}[e^{zL}]=\sum_{i=1}^m ln M_{E_iL_i}(z)$ where the real stationary point the root $z_0$ with $$K'_L(z_0)=x$$
+$z_0$ is a local minimum at real axis and a local maximum at imaginary axis, hence a saddle point in the complex plane. 
+Comments on saddle point approximation: 1) we do not need to approximate the density function first and then integrate, but we can apply saddle point directly to object function. 2) the approximation remain a continous approximate and fail to capture the discrete feature of true loss distribution.  
+
+* Importance Sampling
+
+Instead of sampling from $N(0,1)$, sample from shifted normal distirbution $N(\mu,1)$, where $\mu<0$ should generate more adverse scenarios of $y$ of $Y$.  To correct such bias from sampling, each scenario has a new likelihood ratio, which is $\Phi(y)/\Phi(y-\mu)$.  
+
+Decompose the variace $\mathbb{V}[\hat{F_L}(x)] = \mathbb{E}[\mathbb{V}[\hat{F_L}(x)|Y]] + \mathbb{V}[\mathbb{E}[\hat{F_L}(x)|Y]]$
+
+
+The first term, for Bernouli loss variable $E_iL_i$ are independent, the likelihood ratio is 
+$$\prod_{i=1}^m (\frac{p_{i}(Y)}{p_{i,s}(Y)})^{L_i}(\frac{1-p_i(Y)}{1-p_{i,s}(Y)})^{1-L_i}=exp(-sL+K_L(s))$$ where $K_L(\theta)$ is CGF of $L$ conditional on $Y$.  The unbiased estimator of $F_L(x)$ under twiseted measure is now $F_L(x)e^{-sL+K_L(s)}$.  The minimum is obtained at $K'_L(s_0)=x=\mathbb{E}_s[L]$  The second term, the likelihood ratio for such change of measure is $exp(-\mu^TY+\frac{\mu^T\mu}{2})$
+
+So the two-step importance sampling estimator for $F_L$ is $$F_L exp\big(-s_0(Y)L+K_{L|Y}(s_0(Y))-\mu^TY+\frac{\mu^T\mu}{2}\big)$$
+
+To choose the appropriate $\mu = max\mathbb{P}[L>x|Y=y]e^{-y^Ty/2}$, and approximation of $\mathbb{P}[L>x|Y=y]$ should be obtained.  
+
+Algorithm for Importance Sampling is:
+1. Sample $Y$ ~$N(\mu,\Sigma)$
+2. Compute $s_0(Y)$ and the twisted conditional default probabilities $p_{i,s_0}(Y)$
+3. Generate Losses under the twisted conditional distribution
+4. Return the estimator of $F_L exp\big(-s_0(Y)L+K_{L|Y}(s_0(Y))-\mu^TY+\frac{\mu^T\mu}{2}\big)$
+
+Usefull Formula
+----------------------
+* Power series of Exponential function
+$e^z=\displaystyle\sum_{n=0}^{\infty}\frac{z^n}{n!}$

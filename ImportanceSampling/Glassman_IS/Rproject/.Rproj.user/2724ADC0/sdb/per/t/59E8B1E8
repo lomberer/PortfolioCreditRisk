@@ -1,0 +1,17 @@
+{
+    "contents" : "N <- 1000 #number of loans.\nPosNames <- paste(\"Loan\",1:N,sep=\"\")\nbeta <- rep(0.3,N) #factor loading\nLGD <- rep(0.5,N) \nPD <- rep(0.01,N)\nEAD <- rep(100,N)\n\nport <- data.frame(PosNames,PD,LGD,EAD,beta,stringsAsFactors = F)\nhead(port)\n\n###\nsimMC <- function(port,M){\n  N <- nrow(port)\n  Z <- (rnorm(M,mean=0))\n  LossMC <- matrix(,M,1)\n  for (m in 1:M){\n    e <- rnorm(N,mean=0,sd=1)\n    V <- beta*Z[m] + sqrt(1-beta^2)*e\n    default_flag <- V < qnorm(PD)\n    LossMC[m] <- sum(default_flag * port$EAD * port$LGD)\n  }\n  return (data.frame(Loss=LossMC,Weights=1/M))\n}\n\nsimIS <- function(port,M,mu){\n  N <- nrow(port)\n  Z <- (rnorm(M,mean=mu))\n  LossIS <- matrix(,M,1)\n  for (m in 1:M){\n    e <- rnorm(N,mean=0,sd=1)\n    V <- beta*Z[m] + sqrt(1-beta^2)*e\n    #default_treshold <- (qnorm(PD)-Z*t(beta))/sqrt(1-beta^2)\n    default_flag <- V < qnorm(PD)\n    LossIS[m] <- sum(default_flag * port$EAD * port$LGD)\n  }\n  weights <- exp(-mu*Z+mu^2/2)/M\n  return (data.frame(Loss=LossIS,Weights=weights))\n}\n\nlibrary(Hmisc)\nq = c(0.5,0.9,0.95,0.99,0.999,0.9999)\nlossplot <- function(LossRes){\n  LossAmt <- LossRes$Loss\n  LossWgt <- LossRes$Weights\n  Ecdf(LossAmt,weights = LossWgt,datadensity='density',xlim=c(0,10000),ylim=c(0.9,1),q=q)\n}\n\nlossquantile <- function(LossRes){\n  LossAmt <- LossRes$Loss\n  LossWgt <- LossRes$Weights\n  return(wtd.quantile(LossAmt,weights=LossWgt,probs=q,normwt=T,type='i/n'))\n}\n\nLossBench <- simMC(port,100000)\nLossMC <- simMC(port,10000)\nLossIS <- simIS(port,10000,-3)\n\nBenchmark <- lossquantile(LossBench)\nNaiveMC <- lossquantile(LossMC)\nImportanceSampling <- lossquantile(LossIS)\ndf <- data.frame(Benchmark,NaiveMC,ImportanceSampling)\n\nt(df)\n\nlossplot(LossBench)\nlossplot(LossMC)\nlossplot(LossIS)",
+    "created" : 1413151612313.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2956180142",
+    "id" : "59E8B1E8",
+    "lastKnownWriteTime" : 1413231889,
+    "path" : "~/GitHub/PortfolioCreditRisk/ImportanceSampling/ImportanceSampling.R",
+    "project_path" : null,
+    "properties" : {
+        "tempName" : "Untitled2"
+    },
+    "source_on_save" : false,
+    "type" : "r_source"
+}

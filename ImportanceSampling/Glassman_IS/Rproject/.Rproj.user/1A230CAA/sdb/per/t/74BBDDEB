@@ -1,0 +1,16 @@
+{
+    "contents" : "m = 1000 #number of loans\np = rep(NA,m) #PD\nc = rep(NA,m) #EAD*LGD\nfor (k in 1:m){\n  p[k] = 0.01*(1+sin(16*pi*k/m)) #PD\n  c[k] = ceiling(5*k/m)^2\n}\np = rep(0.01,m)\n\nd = 10 #10-factor model\na = matrix(rep(0.1,m*d),nrow=d)\n#a = matrix(runif(m*d,min=0,max=1/sqrt(d)),nrow=d)#matrix of 10x1000\nb = sqrt(1-colSums(a^2)) #vector of 1000x1\nx = 1000 #loss treshold\n\n#==================\n#eq(2)\ngetp_Z <- function(p,Z,a,b){\n  return(pnorm((colSums(a*Z)+qnorm(p))/b))\n  \"  m <- length(p)\n  p_Z <- rep(NA,m)\n  for (k in 1:m){\n  p_Z[k]=pnorm((sum(a[,k]*Z[,k])+qnorm(p[k]))/b[k])\n  }\n  return(p_Z)\n  \"}\n\n\n\ngetpsi <- function(theta, p,c){\n  psi = 0\n  for (k in 1:length(p)){\n    psi = psi + log(1+p[k]*(exp(theta*c[k])-1))\n  }\n  return(psi)\n}\n\n#likelyhood ratio in eq(5)\ngetlr <- function(theta, p,c,L){\n  return(exp(-theta*L+getpsi(theta,p,c)))\n}\n#\\psi.prime\ngetdpsi <- function(theta,p_Z,c){\n  dpsi = 0\n  for (k in 1:length(p_Z)){\n    dpsi = dpsi+ p_Z[k]*c[k]*exp(theta*c[k])/(1+p_Z[k]*(exp(theta*c[k])-1))\n  }\n  return(dpsi)\n}\n#solve for shifted mean = x, return theta_x\n\ngettheta_x <- function(x,p_Z,c){\n  oz <- function(theta){\n    return(getdpsi(theta,p_Z,c)-x)\n  }\n  theta_x = uniroot(oz,c(0,3))$root\n  return(theta_x)\n}\n#$p_{k,\\theta} in eq(4)\ngetp_theta <- function(theta,p,c){\n  return(p*exp(theta_x*c)/(1+p*(exp(theta_x*c)-1)))\n}\n#pt <- p_theta(tx,p,c)\n\n\n#=====================\n#Step 1\nZ <- matrix(rnorm(d*m),ncol=m)\n# Y = colSums(a*Z)+b*rnorm(m,0,1) < qnorm(p)#condition of default\n#Step 2\np_Z <- getp_Z(p,Z,a,b)\ntheta_x <- gettheta_x(x,p_Z,c)\n#theta_x <- theta_x(x,p,c)\n\n#Step 3\np_theta <- getp_theta(theta_x,p_Z,c)\nY = colSums(a*Z)+b*rnorm(m,0,1) < qnorm(p_theta)\n\n#Step 4\nL = sum(c*Y)\nres = (L>x)*exp(-theta_x*L+getpsi(theta_x,p_theta,c))\n\n\n\nN=1000\nLossMC=matrix(rep(c(1,2),N),nrow=N,byrow=T)\nfor (i in 1:N){\n  LossMC[i,]=GMC()\n}\n\n#——----------------------\nF_x <- function(theta_x,x,p,c){\n  return(-theta_x*x + getpsi(theta_x,p,c))\n}\n\n\n\n",
+    "created" : 1412779877017.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2751793668",
+    "id" : "74BBDDEB",
+    "lastKnownWriteTime" : 1412892652,
+    "path" : "~/GitHub/PortfolioCreditRisk/Rproject/test1.R",
+    "project_path" : "test1.R",
+    "properties" : {
+    },
+    "source_on_save" : false,
+    "type" : "r_source"
+}
