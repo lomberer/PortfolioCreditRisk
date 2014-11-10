@@ -1,7 +1,7 @@
 ---
 title: "ImportantSampling"
 author: "T Xu"
-output: pdf_document
+output: html_document
 ---
 ```{r}
 N <- 1000 #number of loans.
@@ -88,9 +88,9 @@ lossquantile <- function(LossRes){
   return(wtd.quantile(LossAmt,weights=LossWgt,probs=q,normwt=T,type='i/n'))
 }
 
-LossBench <- simMC(port,100000)
-LossMC <- simMC(port,10000)
-LossIS <- simIS(port,10000,-3)
+LossBench <- simMC(port,100000) #100k NMC simulation as a benchmark
+LossMC <- simMC(port,10000) #10k NMC simulation
+LossIS <- simIS(port,10000,-3) #10k IS simulation with shift=-3
 
 Benchmark <- lossquantile(LossBench)
 NaiveMC <- lossquantile(LossMC)
@@ -105,12 +105,14 @@ The following table shows the comparison of qifferent quantile using NaiveMC and
 t(df)
 ```
 From 3 plots we can see that:
+
 1) ImportanceSampling has better convergence than NaiveMC to Benchmark results on Loss Quantiles, espexially on quantiles above 99%
-2) ImportanceSampling generate more samples at extreme losses above 2000.
+
+2) Sampling distribution from ImportanceSampling is more concentrated at large loss amount.
+
 ```{r}
-lossplot(LossBench)
-lossplot(LossMC)
-lossplot(LossIS)
+lossplot(LossMC) #most of the simulation is concetrated at small loss.
+lossplot(LossIS) #median of loss is at large loss, generate more simulation on high loss amount, hence stabler loss measures.
 
 ```
 
